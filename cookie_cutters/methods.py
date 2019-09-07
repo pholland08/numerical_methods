@@ -7,23 +7,23 @@ def bisect(fn: callable, bounds: (float, float), tolerance: float) -> float:
     :param tolerance:
     :return: float
     """
-    lower_bound = bounds[0]
-    upper_bound = bounds[1]
+    lower_bound = min(bounds) if min(bounds) != 0 else tolerance/2
+    upper_bound = max(bounds) if max(bounds) != 0 else -tolerance/2
 
-    lower_result = fn(lower_bound)
-    upper_result = fn(upper_bound)
+    lower_result = float(fn(lower_bound))
+    upper_result = float(fn(upper_bound))
 
-    if abs(lower_result) <= abs(tolerance):
+    if abs(lower_result) < abs(tolerance):
         return lower_bound
 
-    elif abs(upper_result) <= abs(tolerance):
+    elif abs(upper_result) < abs(tolerance):
         return upper_bound
 
     elif lower_result * upper_result < 0:
         mid_point = (lower_bound + upper_bound)/2
-        mid_result = fn(mid_point)
+        mid_result = float(fn(mid_point))
 
-        if abs(mid_result) <= abs(tolerance):
+        if abs(mid_result) < abs(tolerance):
             return mid_point
 
         elif mid_result * lower_result < 0:
