@@ -1,4 +1,5 @@
 import math
+import sys
 
 
 def bisect(fn: callable,
@@ -12,13 +13,11 @@ def bisect(fn: callable,
     :param tolerance:
     :param current_iteration:
     :param max_iterations:
-    :return: {root: float, iterations: int, max_iterations: int}
+    :return: {root: float, iterations: int, max_iterations: int, error: float}
     """
 
-    # todo: calculate precision -> ((new - old)/new)*100
-
-    lower_bound = min(bounds) if min(bounds) != 0 else tolerance/2
-    upper_bound = max(bounds) if max(bounds) != 0 else -tolerance/2
+    lower_bound = min(bounds) if min(bounds) != 0 else sys.float_info.min
+    upper_bound = max(bounds) if max(bounds) != 0 else -sys.float_info.min
 
     lower_result = float(fn(lower_bound))
     upper_result = float(fn(upper_bound))
@@ -27,30 +26,39 @@ def bisect(fn: callable,
     if max_iterations == 0:
         max_iterations = calculate_bisection_iterations(bounds, tolerance)
 
-    if abs(lower_result) < abs(tolerance):
+    if abs(lower_result) <= abs(tolerance):
         return {"root": lower_bound,
                 "iterations": current_iteration,
-                "max_iterations": max_iterations}
+                "max_iterations": max_iterations,
+                "error": 0}
 
-    elif abs(upper_result) < abs(tolerance):
+    elif abs(upper_result) <= abs(tolerance):
         return {"root": upper_bound,
                 "iterations": current_iteration,
-                "max_iterations": max_iterations}
+                "max_iterations": max_iterations,
+                "error": 0}
 
-    elif lower_result * upper_result < 0:
+    elif signs_differ(lower_result, upper_result):
         mid_point = (lower_bound + upper_bound)/2
         mid_result = fn(mid_point)
 
         if abs(mid_result) < abs(tolerance):
             return {"root": mid_point,
-                    "iterations": current_iteration,
-                    "max_iterations": max_iterations}
+                    "iterations": current_iteration + 1,
+                    "max_iterations": max_iterations,
+                    "error": 0}
 
         elif signs_differ(mid_result, lower_result):
-            return bisect(fn, (lower_bound, mid_point), tolerance, current_iteration, max_iterations)
+            result = bisect(fn, (lower_bound, mid_point), tolerance, current_iteration, max_iterations)
+            if result["error"] == 0:
+                result["error"] = calculate_bisection_error(result["root"], lower_bound)
+            return result
 
         elif signs_differ(mid_result, upper_result):
-            return bisect(fn, (mid_point, upper_bound), tolerance, current_iteration, max_iterations)
+            result = bisect(fn, (mid_point, upper_bound), tolerance, current_iteration, max_iterations)
+            if result["error"] == 0:
+                result["error"] = calculate_bisection_error(result["root"], upper_bound)
+            return result
 
     raise Exception("Root not found")
 
@@ -60,32 +68,62 @@ def signs_differ(n1: float, n2: float):
 
 
 def calculate_bisection_iterations(bounds: tuple, tolerance: float) -> int:
-    return math.ceil(math.log(abs(max(bounds)-min(bounds))/tolerance, 2))
+    """
+    ceil(nlog(upper-lower)-nlog(tolerance)/log2)+1
+    :param bounds:
+    :param tolerance:
+    :return:
+    """
+    return math.ceil(math.log(abs(max(bounds)-min(bounds))/tolerance, 2) - 1)
 
 
-def calculate_bisection_precision(current_value: float, previous_value: float) -> float:
+def calculate_bisection_error(current_value: float, previous_value: float) -> float:
     return abs((current_value - previous_value)/current_value) * 100
 
 
-def newton_raphson(fn: callable, dfn: callable, x_initial: float, max_iterations: int) -> float:
+def newton_raphson(fn: callable, dfn: callable, x_0: float, tolerance: float) -> dict:
     """
     :param fn: Original function
     :param dfn: Derivative of original function
-    :param x_initial: Non-zero starting point
-    :param max_iterations:
+    :param x_0: Non-zero starting point
+    :param tolerance:
     :return:
     """
 
-    # todo: calculate precision
     # todo: keep list of previous values to check for oscillation
+    x_current = x_0 - (fn(x_0) / dfn(x_0))
 
-    if max_iterations > 0:
-        fx = x_initial - (fn(x_initial) / dfn(x_initial))
-        return newton_raphson(fn, dfn, fx, max_iterations-1)
+    if abs(fn(x_current)) > abs(tolerance):
+        result = newton_raphson(fn, dfn, x_current, tolerance)
+        result["iterations"] = result["iterations"] + 1
+        return result
 
     else:
-        return x_initial
+        return {"root": x_current,
+                "iterations": 1}
 
 
-def secant(fn: callable, x: float) -> float:
-    pass
+def secant(fn: callable,
+           x_0: float,
+           x_1: float,
+           tolerance: float) -> dict:
+    """
+    :param fn:
+    :param x_0:
+    :param x_1:
+    :param tolerance:
+    :return:
+    """
+    max_iterations = calculate_bisection_iterations((x_0, x_1), tolerance)
+    x_current = x_1 - ((fn(x_1) * (x_1-x_0))/(fn(x_1) - fn(x_0)))
+
+    if abs(fn(x_current)) > tolerance:
+        result = secant(fn, x_1, x_current, tolerance)
+        result["iterations"] = result["iterations"] + 1
+        result["max_iterations"] = max_iterations
+        return result
+
+    else:
+        return {"root": x_current,
+                "iterations": 1,
+                "max_iterations": max_iterations}
