@@ -1,7 +1,8 @@
 bin/
 include/
 lib/
-out/
 .idea/
-*.iml
 lib64/
+out/
+__pycache__/
+*.iml

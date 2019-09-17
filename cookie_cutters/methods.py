@@ -127,3 +127,26 @@ def secant(fn: callable,
         return {"root": x_current,
                 "iterations": 1,
                 "max_iterations": max_iterations}
+
+
+def modified_newton(fn: callable, d1fn: callable, d2fn: callable, x_0: float, tolerance: float) -> dict:
+    """
+    :param fn:
+    :param d1fn:
+    :param d2fn:
+    :param x_0:
+    :param tolerance:
+    :return:
+    """
+
+    #todo: Add oscillation detection
+    x_current = x_0 - (fn(x_0)*d1fn(x_0))/(math.floor(d1fn(x_0))**2 - fn(x_0)*d2fn(x_0))
+
+    if abs(fn(x_current)) > abs(tolerance):
+        result = modified_newton(fn, d1fn, d2fn, x_current, tolerance)
+        result["iterations"] = result["iterations"] + 1
+        return result
+
+    else:
+        return {"root": x_current,
+                "iterations": 1}
