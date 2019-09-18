@@ -15,7 +15,7 @@ class TestSecant(TestCase):
         5=1/x, x_0=0.25
         """
 
-        result = methods.secant(lambda x: (1/x) - 5, .0000001, .25, tolerance)
+        result = methods.secant(lambda x: (1/x) - 5, 0, .25, tolerance)
         self.assertTrue(.2 - tolerance <= result["root"] <= .2 + tolerance)
 
     def test_fn_b(self):

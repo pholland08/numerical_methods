@@ -114,6 +114,9 @@ def secant(fn: callable,
     :param tolerance:
     :return:
     """
+    x_0 = tolerance if x_0 == 0 else x_0
+    x_1 = tolerance if x_1 == 0 else x_1
+
     max_iterations = calculate_bisection_iterations((x_0, x_1), tolerance)
     x_current = x_1 - ((fn(x_1) * (x_1-x_0))/(fn(x_1) - fn(x_0)))
 
