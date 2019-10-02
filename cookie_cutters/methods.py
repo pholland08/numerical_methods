@@ -51,13 +51,13 @@ def bisect(fn: callable,
         elif signs_differ(mid_result, lower_result):
             result = bisect(fn, (lower_bound, mid_point), tolerance, current_iteration, max_iterations)
             if result["error"] == 0:
-                result["error"] = calculate_bisection_error(result["root"], lower_bound)
+                result["error"] = calculate_relative_difference(result["root"], lower_bound)
             return result
 
         elif signs_differ(mid_result, upper_result):
             result = bisect(fn, (mid_point, upper_bound), tolerance, current_iteration, max_iterations)
             if result["error"] == 0:
-                result["error"] = calculate_bisection_error(result["root"], upper_bound)
+                result["error"] = calculate_relative_difference(result["root"], upper_bound)
             return result
 
     raise Exception("Root not found")
@@ -77,7 +77,7 @@ def calculate_bisection_iterations(bounds: tuple, tolerance: float) -> int:
     return math.ceil(math.log(abs(max(bounds)-min(bounds))/tolerance, 2) - 1)
 
 
-def calculate_bisection_error(current_value: float, previous_value: float) -> float:
+def calculate_relative_difference(current_value: float, previous_value: float) -> float:
     return abs((current_value - previous_value)/current_value) * 100
 
 
@@ -93,7 +93,7 @@ def newton_raphson(fn: callable, dfn: callable, x_0: float, tolerance: float) ->
     # todo: keep list of previous values to check for oscillation
     x_current = x_0 - (fn(x_0) / dfn(x_0))
 
-    if abs(fn(x_current)) > abs(tolerance):
+    if calculate_relative_difference(x_current, x_0) > abs(tolerance):
         result = newton_raphson(fn, dfn, x_current, tolerance)
         result["iterations"] = result["iterations"] + 1
         return result
@@ -120,7 +120,7 @@ def secant(fn: callable,
     max_iterations = calculate_bisection_iterations((x_0, x_1), tolerance)
     x_current = x_1 - ((fn(x_1) * (x_1-x_0))/(fn(x_1) - fn(x_0)))
 
-    if abs(fn(x_current)) > tolerance:
+    if calculate_relative_difference(x_current, x_1) > tolerance:
         result = secant(fn, x_1, x_current, tolerance)
         result["iterations"] = result["iterations"] + 1
         result["max_iterations"] = max_iterations
@@ -143,11 +143,11 @@ def modified_newton(fn: callable, d1fn: callable, d2fn: callable, x_0: float, to
     """
 
     #todo: Add oscillation detection
-    x_current = x_0 - (fn(x_0)*d1fn(x_0))/(math.floor(d1fn(x_0))**2 - fn(x_0)*d2fn(x_0))
+    x_current = x_0 - (fn(x_0)*d1fn(x_0))/((d1fn(x_0)**2) - fn(x_0)*d2fn(x_0))
 
     if abs(fn(x_current)) > abs(tolerance):
         result = modified_newton(fn, d1fn, d2fn, x_current, tolerance)
-        result["iterations"] = result["iterations"] + 1
+        result["iterations"] += 1
         return result
 
     else:

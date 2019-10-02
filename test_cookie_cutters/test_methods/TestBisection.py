@@ -7,12 +7,8 @@ tolerance = 10 ** -8
 
 class TestBisection(TestCase):
 
-    def test_bisection_precision(self):
-        result = methods.bisect(lambda x: (x**3 - 20), (-1, 4), tolerance)
-        print(result)
-
     def test_calculate_bisection_error(self):
-        precision = methods.calculate_bisection_error(3.25, 2.5)
+        precision = methods.calculate_relative_difference(3.25, 2.5)
         self.assertAlmostEqual(23.0769, precision, 4)
 
     def test_calculate_bisection_iterations(self):
@@ -31,7 +27,6 @@ class TestBisection(TestCase):
 
     def test_midpoint_root_succeeds(self):
         result = methods.bisect(lambda x: x**3, (-1, 1), tolerance)
-        print(result)
         self.assertTrue(-tolerance <= result["root"] <= tolerance)
 
     def test_expected_iterations(self):
@@ -42,7 +37,6 @@ class TestBisection(TestCase):
         fn = lambda x: x**3 - 20
         bounds = (0, 5)
         result = methods.bisect(fn, bounds, tolerance)
-        print(result)
         self.assertGreaterEqual(result["max_iterations"], methods.calculate_bisection_iterations(bounds, tolerance))
 
     def test_fn_a(self):
