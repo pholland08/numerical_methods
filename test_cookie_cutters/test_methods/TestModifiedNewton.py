@@ -56,5 +56,5 @@ class TestModifiedNewton(TestCase):
         x-x^3=3, x_0=2
         """
 
-        result = methods.modified_newton(lambda x: x - (x**3) - 3, lambda x: 1 - 3*(x**2), lambda x: -6*x, -2, tolerance)
+        result = methods.modified_newton(lambda x: x - (x**3) - 3, lambda x: 1 - 3*(x**2), lambda x: -6*x, 2, tolerance)
         self.assertTrue(-1.671699881 - tolerance < result["root"] < -1.671699881 + tolerance)
